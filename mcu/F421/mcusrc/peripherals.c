@@ -110,7 +110,7 @@ void TIM1_Init(void){
 	TMR1->cm1 = 0x6868;   // Channel 1 and 2 in PWM output mode
 	TMR1->cm2 = 0x68;     // channel 3 in PWM output mode
 
-		tmr_output_channel_buffer_enable(TMR1,TMR_SELECT_CHANNEL_1, TRUE);
+	tmr_output_channel_buffer_enable(TMR1,TMR_SELECT_CHANNEL_1, TRUE);
 	tmr_output_channel_buffer_enable(TMR1,TMR_SELECT_CHANNEL_2, TRUE);
 	tmr_output_channel_buffer_enable(TMR1,TMR_SELECT_CHANNEL_3, TRUE);
 
@@ -147,6 +147,11 @@ gpio_pin_mux_config(PHASE_B_GPIO_PORT_HIGH, PHASE_B_PIN_SOURCE_HIGH, GPIO_MUX_2)
 gpio_pin_mux_config(PHASE_C_GPIO_PORT_HIGH, PHASE_C_PIN_SOURCE_HIGH, GPIO_MUX_2);
 
 
+  tmr_interrupt_enable(TMR1, TMR_OVF_INT, TRUE);
+	//TMR_C1_FLAG
+  /* tmr1 overflow interrupt nvic init */
+  //nvic_priority_group_config(NVIC_PRIORITY_GROUP_0);
+  nvic_irq_enable(TMR1_BRK_OVF_TRG_HALL_IRQn, 0, 0);
 }
 
 

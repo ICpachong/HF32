@@ -434,6 +434,30 @@ uint8_t advancedivisor = 4;
 char rising = 1;
 
 
+int inner_step=1;
+uint16_t last_adjusted_duty_cycle=0;
+void setPwmRatio(){
+	#if 1
+	uint32_t targetduty;	
+	if(inner_step<0){
+		targetduty = (uint32_t)last_adjusted_duty_cycle*95/100;
+	}else if(inner_step<=1){
+		targetduty = (uint32_t)last_adjusted_duty_cycle*90/100;
+		++inner_step;
+	}else {
+		targetduty = (uint32_t)last_adjusted_duty_cycle;
+	}
+	TMR1->c1dt = targetduty;
+	TMR1->c2dt = targetduty;
+	TMR1->c3dt = targetduty;
+	#else
+		TMR1->c1dt = last_adjusted_duty_cycle;
+		TMR1->c2dt = last_adjusted_duty_cycle;
+		TMR1->c3dt = last_adjusted_duty_cycle;
+	#endif
+	
+}
+
 ////Space Vector PWM ////////////////
 //const int pwmSin[] ={128, 132, 136, 140, 143, 147, 151, 155, 159, 162, 166, 170, 174, 178, 181, 185, 189, 192, 196, 200, 203, 207, 211, 214, 218, 221, 225, 228, 232, 235, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 248, 249, 250, 250, 251, 252, 252, 253, 253, 253, 254, 254, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 254, 254, 254, 253, 253, 253, 252, 252, 251, 250, 250, 249, 248, 248, 247, 246, 245, 244, 243, 242, 241, 240, 239, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 248, 249, 250, 250, 251, 252, 252, 253, 253, 253, 254, 254, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 254, 254, 254, 253, 253, 253, 252, 252, 251, 250, 250, 249, 248, 248, 247, 246, 245, 244, 243, 242, 241, 240, 239, 238, 235, 232, 228, 225, 221, 218, 214, 211, 207, 203, 200, 196, 192, 189, 185, 181, 178, 174, 170, 166, 162, 159, 155, 151, 147, 143, 140, 136, 132, 128, 124, 120, 116, 113, 109, 105, 101, 97, 94, 90, 86, 82, 78, 75, 71, 67, 64, 60, 56, 53, 49, 45, 42, 38, 35, 31, 28, 24, 21, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 8, 7, 6, 6, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 8, 7, 6, 6, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 24, 28, 31, 35, 38, 42, 45, 49, 53, 56, 60, 64, 67, 71, 75, 78, 82, 86, 90, 94, 97, 101, 105, 109, 113, 116, 120, 124};
 
@@ -827,6 +851,7 @@ void getBemfState(){
 
 
 void commutate(){
+	inner_step=0;
 	commutation_intervals[step-1] = commutation_interval;
 	e_com_time = (commutation_intervals[0] + commutation_intervals[1] + commutation_intervals[2] + commutation_intervals[3] + commutation_intervals[4] +commutation_intervals[5]) >> 1;  // COMMUTATION INTERVAL IS 0.5US INCREMENTS
 
@@ -869,7 +894,7 @@ void commutate(){
 	  if(zero_crosses < 100){
 		  speedPid.integral = 0;
 	  }
-}
+}		
 }
 
 void PeriodElapsedCallback(){
@@ -926,7 +951,7 @@ thiszctime = INTERVAL_TIMER->cval;
 			    }
 				}
 			}
-			
+			inner_step=-1;
 						maskPhaseInterrupts();
 						INTERVAL_TIMER->cval = 0 ;
 						waitTime = waitTime >> fast_accel;
@@ -1199,9 +1224,8 @@ if(!prop_brake_active){
 		last_duty_cycle = duty_cycle;
 		TMR1->pr = tim1_arr;
 
-	TMR1->c1dt = adjusted_duty_cycle;
-	TMR1->c2dt = adjusted_duty_cycle;
-	TMR1->c3dt = adjusted_duty_cycle;		
+	last_adjusted_duty_cycle=adjusted_duty_cycle;
+	setPwmRatio();
 	}
 average_interval = e_com_time / 3;
 if(desync_check && zero_crosses > 10){
@@ -1350,6 +1374,7 @@ void zcfoundroutine(){   // only used in polling mode, blocking routine.
 	commutation_interval = (thiszctime + (3*commutation_interval)) / 4;
 	advance = commutation_interval / advancedivisor;
 	waitTime = commutation_interval /2  - advance;
+	inner_step=-1;
 	while (INTERVAL_TIMER->cval < waitTime - advance){
 
 	}

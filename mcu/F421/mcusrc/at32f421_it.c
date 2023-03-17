@@ -204,6 +204,16 @@ void ADC1_CMP_IRQHandler(void)
 	    interruptRoutine();
 	  }
 }
+void setPwmRatio();
+
+void TMR1_BRK_OVF_TRG_HALL_IRQHandler(void)
+{
+  if(tmr_flag_get(TMR1, TMR_OVF_FLAG) != RESET)
+  {
+		setPwmRatio();
+    tmr_flag_clear(TMR1, TMR_OVF_FLAG);
+  }
+}
 
 /**
   * @brief This function handles TIM6 global and DAC underrun error interrupts.
