@@ -75,8 +75,8 @@ void ADC_Init(void)
   adc_base_config(ADC1, &adc_base_struct);
   
 	
-	adc_ordinary_channel_set(ADC1, ADC_CHANNEL_4, 1, ADC_SAMPLETIME_28_5);
-  adc_ordinary_channel_set(ADC1, ADC_CHANNEL_5, 2, ADC_SAMPLETIME_28_5);
+	adc_ordinary_channel_set(ADC1, ADC_CHANNEL_3, 1, ADC_SAMPLETIME_28_5);
+  adc_ordinary_channel_set(ADC1, ADC_CHANNEL_6, 2, ADC_SAMPLETIME_28_5);
   adc_ordinary_channel_set(ADC1, ADC_CHANNEL_16, 3, ADC_SAMPLETIME_28_5);
   
 	adc_tempersensor_vintrv_enable(TRUE);
