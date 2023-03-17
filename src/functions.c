@@ -85,13 +85,12 @@ UTILITY_TIMER->cval = 0;
 
 	}
 }
-
 void delayMillis(uint32_t millis){
 	UTILITY_TIMER->cval = 0; 
 	UTILITY_TIMER->div = (CPU_FREQUENCY_MHZ * 100);
 	UTILITY_TIMER->swevt |= TMR_OVERFLOW_SWTRIG;
 	while (UTILITY_TIMER->cval < (millis*10)){
-
+		WDT->cmd = WDT_CMD_RELOAD;
 	}
 	UTILITY_TIMER->div = CPU_FREQUENCY_MHZ;
 	UTILITY_TIMER->swevt |= TMR_OVERFLOW_SWTRIG;
