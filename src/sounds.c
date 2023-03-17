@@ -49,7 +49,7 @@ void playBJNote(uint16_t freq, uint16_t bduration){        // hz and ms
 	uint16_t timerOne_reload = TIM1_AUTORELOAD;
  
 	TMR1->div = 10;
-	timerOne_reload = 4800000 / freq;
+	timerOne_reload = CPU_FREQUENCY_MHZ*100000 / freq;
 	
 	TMR1->pr = timerOne_reload;
 	TMR1->c1dt = beep_volume * timerOne_reload /TIM1_AUTORELOAD ; // volume of the beep, (duty cycle) don't go above 25 out of 2000
@@ -60,7 +60,7 @@ void playBJNote(uint16_t freq, uint16_t bduration){        // hz and ms
 }
 
 
-uint16_t getBlueJayNoteFrequency(uint8_t bjarrayfreq){
+uint16_t getBlueJayNoteFrequency(uint32_t bjarrayfreq){
 	return 10000000/(bjarrayfreq * 247 + 4000);
 }
 
@@ -86,7 +86,7 @@ void playBlueJayTune(){
 				delayMillis(duration);
 			}else{
 			frequency = getBlueJayNoteFrequency(eepromBuffer[i+1]);
-			duration= (full_time_count * 254 + eepromBuffer[i])  * (float)(1000 / frequency);
+			duration= (full_time_count * 254 + eepromBuffer[i])  * (float)(1000.f / frequency);
 			playBJNote(frequency, duration);
 			}
 			full_time_count = 0;
