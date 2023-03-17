@@ -982,30 +982,30 @@ if(!armed){
 			armed_timeout_count++;
 			if(armed_timeout_count > 10000){    // one second
 				if(zero_input_count > 30){
-				armed = 1;
-	//			receiveDshotDma();
-				#ifdef USE_RGB_LED
-				  			GPIOB->BRR = LL_GPIO_PIN_3;    // turn on green
-				  			GPIOB->BSRR = LL_GPIO_PIN_8;   // turn on green
-				  			GPIOB->BSRR = LL_GPIO_PIN_5;
-				#endif
-				  			if(cell_count == 0 && LOW_VOLTAGE_CUTOFF){
-				  			  cell_count = battery_voltage / 370;
-				  			  for (int i = 0 ; i < cell_count; i++){
-				  			  playInputTune();
-				  			  delayMillis(100);
-	//			  			 IWDG_ReloadCounter(IWDG);
-				  			  }
-				  			  }else{
-				  			  playInputTune();
-				  			  }
-				  			if(!servoPwm){
-				  				RC_CAR_REVERSE = 0;
-				  			}
-			}else{
-				inputSet = 0;
-				armed_timeout_count =0;
-			}
+					armed = 1;
+		//			receiveDshotDma();
+					#ifdef USE_RGB_LED
+									GPIOB->BRR = LL_GPIO_PIN_3;    // turn on green
+									GPIOB->BSRR = LL_GPIO_PIN_8;   // turn on green
+									GPIOB->BSRR = LL_GPIO_PIN_5;
+					#endif
+									if(cell_count == 0 && LOW_VOLTAGE_CUTOFF){
+										cell_count = battery_voltage / 370;
+										for (int i = 0 ; i < cell_count; i++){
+										playInputTune();
+										delayMillis(100);
+		//			  			 IWDG_ReloadCounter(IWDG);
+										}
+										}else{
+										playInputTune();
+										}
+									if(!servoPwm){
+										RC_CAR_REVERSE = 0;
+									}
+				}else{
+					inputSet = 0;
+					armed_timeout_count =0;
+				}
 			}
 		}else{
 			armed_timeout_count =0;
@@ -1279,8 +1279,8 @@ if(send_telemetry){
 				}
 				NVIC_SystemReset();
 			}
-
-		if (signaltimeout > 25000){     // 2.5 second
+#if !defined USE_DEBUG
+		if ( signaltimeout > 50000){     // 5 second
 			allOff();
 			armed = 0;
 			input = 0;
@@ -1297,6 +1297,8 @@ if(send_telemetry){
 			}
 			NVIC_SystemReset();
 		}
+#endif
+
 			}
 #endif
 }
@@ -1411,6 +1413,7 @@ adc_counter = 4;
    #endif
 
  UTILITY_TIMER->ctrl1_bit.tmren = TRUE;
+ //delayMillis(2000);
 
 INTERVAL_TIMER->ctrl1_bit.tmren = TRUE;
 

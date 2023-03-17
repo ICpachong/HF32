@@ -19,6 +19,7 @@
 #endif
 
 
+//#define USE_DEBUG
 
 #ifdef AT32DEV_F421
 #define FIRMWARE_NAME           "AT32PB4     "
