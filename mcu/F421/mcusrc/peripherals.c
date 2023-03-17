@@ -93,13 +93,13 @@ void AT_COMP_Init(void)
 
 void MX_IWDG_Init(void)
 {
-	
+#if !defined USE_DEBUG
 	WDT->cmd = WDT_CMD_UNLOCK;
 	WDT->cmd = WDT_CMD_ENABLE;
   WDT->div = WDT_CLK_DIV_32;
 	WDT->rld = 4000;
 	WDT->cmd = WDT_CMD_RELOAD;
-	
+#endif	
 }
 
 void TIM1_Init(void){
@@ -191,7 +191,8 @@ void TIM17_Init(void)
 {
 	crm_periph_clock_enable(CRM_TMR17_PERIPH_CLOCK, TRUE);
 	TMR17->pr = 0xFFFF;
-	TMR17->div = 59;
+	//TMR17->div = 59;
+	TMR17->div = CPU_FREQUENCY_MHZ-1;
 TMR17->ctrl1_bit.prben = TRUE;
 
 }

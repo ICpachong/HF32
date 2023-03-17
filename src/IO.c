@@ -91,20 +91,19 @@ void detectInput(){
 
 
 
-
+	int sigcount=0;
 	for ( int j = 1 ; j < 31; j++){
 		if(dma_buffer[j] - lastnumber > 0 ){
-		if((dma_buffer[j] - lastnumber) < smallestnumber){
-
-			smallestnumber = dma_buffer[j] - lastnumber;
-
-	}
-
-		average_signal_pulse += (dma_buffer[j] - lastnumber);
-	}
+			if((dma_buffer[j] - lastnumber) < smallestnumber){
+					smallestnumber = dma_buffer[j] - lastnumber;
+			}
+			average_signal_pulse += (dma_buffer[j] - lastnumber);
+			++sigcount;
+		}
 		lastnumber = dma_buffer[j];
 	}
-	average_signal_pulse = average_signal_pulse/32 ;
+	if(sigcount<=0)sigcount=1;
+	average_signal_pulse = average_signal_pulse/sigcount ;
 #ifdef MCU_AT415
 	if ((smallestnumber > 1)&&(smallestnumber <= 5)&& (average_signal_pulse < 70)) {
 #endif			
@@ -143,18 +142,24 @@ void detectInput(){
 //		oneshot42 = 1;
 //	}
 		if (smallestnumber > 30 && smallestnumber < 20000){
-			servoPwm = 1;
-			ic_timer_prescaler=119;
-			armed_count_threshold = 35;
-			buffersize = 2;
+			if((average_signal_pulse-smallestnumber)/(float)smallestnumber<0.1f){
+				servoPwm = 1;
+				ic_timer_prescaler=119;
+				armed_count_threshold = 35;
+				buffersize = 2;
+			}
 		}
 
-	if (smallestnumber == 0 || smallestnumber == 20000){
+	if(dshot||servoPwm){
+		inputSet = 1;
+	}else{
+		inputSet = 0;
+	}
+	/*if (smallestnumber == 0 || smallestnumber == 20000){
 		inputSet = 0;
 	}else{
-
 		inputSet = 1;
-	}
+	}*/
 	UTILITY_TIMER->c1dt = smallestnumber;
 }
 
