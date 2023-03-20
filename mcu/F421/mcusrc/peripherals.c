@@ -146,12 +146,14 @@ gpio_pin_mux_config(PHASE_A_GPIO_PORT_HIGH, PHASE_A_PIN_SOURCE_HIGH, GPIO_MUX_2)
 gpio_pin_mux_config(PHASE_B_GPIO_PORT_HIGH, PHASE_B_PIN_SOURCE_HIGH, GPIO_MUX_2);
 gpio_pin_mux_config(PHASE_C_GPIO_PORT_HIGH, PHASE_C_PIN_SOURCE_HIGH, GPIO_MUX_2);
 
-
+#if defined(USE_INNER_STEP)
   tmr_interrupt_enable(TMR1, TMR_OVF_INT, TRUE);
 	//TMR_C1_FLAG
   /* tmr1 overflow interrupt nvic init */
   //nvic_priority_group_config(NVIC_PRIORITY_GROUP_0);
   nvic_irq_enable(TMR1_BRK_OVF_TRG_HALL_IRQn, 0, 0);
+#endif
+
 }
 
 

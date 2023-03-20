@@ -20,6 +20,7 @@
 
 
 //#define USE_DEBUG
+//#define USE_INNER_STEP
 
 #ifdef AT32DEV_F421
 #define FIRMWARE_NAME           "AT32PB4     "
@@ -28,6 +29,15 @@
 #define HARDWARE_GROUP_AT_A
 #define USE_SERIAL_TELEMETRY
 #endif
+
+#ifdef AT32DEV_F421_540
+#define FIRMWARE_NAME           "AT32PB4 540 "
+#define FILE_NAME                "AT32DEV_F421_5"
+#define DEAD_TIME               60
+#define HARDWARE_GROUP_AT_A
+#define USE_SERIAL_TELEMETRY
+#endif
+
 
 #ifdef TEKKO32_F421
 #define FIRMWARE_NAME           "Tekko32 F4  "
@@ -167,9 +177,15 @@
 //#define PHASE_B_COMP COMP_INMInput_IN1  // pa4
 //#define PHASE_C_COMP COMP_INMInput_IN2  // pa5
 
+#if defined(AT32DEV_F421_540)
+#define PHASE_A_COMP  0x400000D1          
+#define PHASE_B_COMP  0x400000C1
+#define PHASE_C_COMP  0x400000E1  
+#else
 #define PHASE_A_COMP  0x400000E1            
 #define PHASE_B_COMP  0x400000C1
 #define PHASE_C_COMP  0x400000D1
+#endif
 
 #endif
 

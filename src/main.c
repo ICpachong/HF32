@@ -243,6 +243,7 @@ char VARIABLE_PWM = 1;
 char bi_direction = 0;
 char stuck_rotor_protection = 1;	// Turn off for Crawlers
 char brake_on_stop = 0;
+uint16_t stop_counter_for_alloff=0; //the counter for pwm off for 0 input
 char stall_protection = 0;
 char use_sin_start = 0;
 char TLM_ON_INTERVAL = 0;
@@ -437,7 +438,7 @@ char rising = 1;
 int inner_step=1;
 uint16_t last_adjusted_duty_cycle=0;
 void setPwmRatio(){
-	#if 1
+#if defined(USE_INNER_STEP)
 	uint32_t targetduty;	
 	if(inner_step<0){
 		targetduty = (uint32_t)last_adjusted_duty_cycle*95/100;
@@ -450,12 +451,11 @@ void setPwmRatio(){
 	TMR1->c1dt = targetduty;
 	TMR1->c2dt = targetduty;
 	TMR1->c3dt = targetduty;
-	#else
-		TMR1->c1dt = last_adjusted_duty_cycle;
-		TMR1->c2dt = last_adjusted_duty_cycle;
-		TMR1->c3dt = last_adjusted_duty_cycle;
-	#endif
-	
+#else
+	TMR1->c1dt = last_adjusted_duty_cycle;
+	TMR1->c2dt = last_adjusted_duty_cycle;
+	TMR1->c3dt = last_adjusted_duty_cycle;
+#endif	
 }
 
 ////Space Vector PWM ////////////////
@@ -1048,6 +1048,7 @@ if(!armed){
 #ifndef BRUSHED_MODE
 	if(!stepper_sine){
 	  if (input >= 47 +(80*use_sin_start) && armed){
+			stop_counter_for_alloff=0;
 		  if (running == 0){
 			  allOff();
 			  if(!old_routine){
@@ -1138,8 +1139,12 @@ if(!armed){
 	//todo add proportional braking for pwm/enable style bridge.
 #endif
 			  		  }
-			  	  }else{
-			  		  allOff();
+			  	  }else{							
+							if(stop_counter_for_alloff>1000){
+								allOff();
+							}else{
+								++stop_counter_for_alloff;
+							}
 			  		  duty_cycle = 0;
 			  	  }
 		  }
@@ -1977,10 +1982,10 @@ TMR1->c3dt = adjusted_duty_cycle;
 		// todo add braking for PWM /enable style bridges.
 #endif
 	}else{
-TMR1->c1dt = 0;
-TMR1->c2dt = 0;
-TMR1->c3dt = 0;
-	allOff();
+		TMR1->c1dt = 0;
+		TMR1->c2dt = 0;
+		TMR1->c3dt = 0;
+		allOff();
 	}
 	running = 0;
 }
