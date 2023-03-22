@@ -49,7 +49,7 @@ void playBJNote(uint16_t freq, uint16_t bduration){        // hz and ms
 	uint16_t timerOne_reload = TIM1_AUTORELOAD;
  
 	TMR1->div = 10;
-	timerOne_reload = CPU_FREQUENCY_MHZ*100000 / freq;
+	timerOne_reload = CPU_FREQUENCY_MHZ*100000 / freq-1;
 	
 	TMR1->pr = timerOne_reload;
 	TMR1->c1dt = beep_volume * timerOne_reload /TIM1_AUTORELOAD ; // volume of the beep, (duty cycle) don't go above 25 out of 2000
@@ -64,29 +64,29 @@ uint16_t getBlueJayNoteFrequency(uint32_t bjarrayfreq){
 	return 10000000/(bjarrayfreq * 247 + 4000);
 }
 
-void playBlueJayTune(){
+void playBlueJayTune(const uint8_t *buffer, int start,int end){
 	uint8_t full_time_count = 0;
 	uint16_t duration;
 	float frequency;
 	comStep(3);
 	//read_flash_bin(blueJayTuneBuffer , EEPROM_START_ADD + 48 , 128);
-	for(int i = 52 ; i < 176 ; i+=2){
+	for(int i = start ; i < end ; i+=2){
 	WDT->cmd = WDT_CMD_RELOAD;
 		signaltimeout = 0;
 
-		if(eepromBuffer[i] == 255){
+		if(buffer[i] == 255){
 			full_time_count++;
 
 		}else{
-			if(eepromBuffer[i+1] == 0){
-				duration = full_time_count * 254 + eepromBuffer[i];
+			if(buffer[i+1] == 0){
+				duration = full_time_count * 254 + buffer[i];
 				TMR1->c1dt = 0 ; //
 				TMR1->c2dt = 0;
 				TMR1->c3dt = 0;
 				delayMillis(duration);
 			}else{
-			frequency = getBlueJayNoteFrequency(eepromBuffer[i+1]);
-			duration= (full_time_count * 254 + eepromBuffer[i])  * (float)(1000.f / frequency);
+			frequency = getBlueJayNoteFrequency(buffer[i+1]);
+			duration= (full_time_count * 254 + buffer[i])  * (float)(1000.f / frequency);
 			playBJNote(frequency, duration);
 			}
 			full_time_count = 0;
@@ -104,7 +104,7 @@ void playStartupTune(){
 
 	uint8_t value = *(uint8_t*)(EEPROM_START_ADD+48);
 		if(value != 0xFF){
-		playBlueJayTune();
+			playBlueJayTune(eepromBuffer,52,167);
 		}else{
 	TMR1->pr = TIM1_AUTORELOAD;
 	setCaptureCompare();
@@ -204,7 +204,10 @@ WDT->cmd = WDT_CMD_RELOAD;
 
 void playInputTune(){
 	__disable_irq();
-	TMR1->pr = TIM1_AUTORELOAD;
+	const uint8_t buf[]={0x45,0x2d,0xe0,0,0xa1,0x19};
+	playBlueJayTune(buf,0,sizeof(buf));
+		
+	/*TMR1->pr = TIM1_AUTORELOAD;
 WDT->cmd = WDT_CMD_RELOAD;
 	TMR1->div = 80;
 	setCaptureCompare();
@@ -217,7 +220,7 @@ WDT->cmd = WDT_CMD_RELOAD;
 	allOff();
 	TMR1->div = 0;
 	signaltimeout = 0;
-	TMR1->pr = TIMER1_MAX_ARR;
+	TMR1->pr = TIMER1_MAX_ARR;*/
 	__enable_irq();
 }
 
