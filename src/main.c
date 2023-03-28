@@ -368,6 +368,10 @@ uint16_t low_pin_count = 0;
 
 uint8_t max_duty_cycle_change = 2;
 char fast_accel = 1;
+int this_com_interval_ratio=10000;
+#if defined(USE_DEBUG)
+int max_com_interval_ratio=10000;
+#endif
 uint16_t last_duty_cycle = 0;
 char play_tone_flag = 0;
 
@@ -899,10 +903,9 @@ void commutate(){
 
 void PeriodElapsedCallback(){
 	    COM_TIMER->iden &= ~TMR_OVF_INT; // disable interrupt         
-			commutation_interval = (( 3*commutation_interval) + thiszctime)>>2;
+
 			commutate();
-			advance = (commutation_interval>>3) * advance_level;   // 60 divde 8 7.5 degree increments
-			waitTime = (commutation_interval >>1)  - advance;
+
 			if(!old_routine){
 			enableCompInterrupts();     // enable comp interrupt
 			}
@@ -919,7 +922,7 @@ void interruptRoutine(){
 if ((INTERVAL_TIMER->cval < 125) && (duty_cycle < 600) && (zero_crosses < 500)){    //should be impossible, desync?exit anyway
 	return;
 }
-if ((INTERVAL_TIMER->cval < (commutation_interval >> 1))){
+if ((INTERVAL_TIMER->cval < (commutation_interval >> 2))){//change to max 1/4 change
 	return;
 }
 stuckcounter++;             // stuck at 100 interrupts before the main loop happens again.
@@ -929,8 +932,8 @@ if (stuckcounter > 100){
 	return;
 }
 	}
-thiszctime = INTERVAL_TIMER->cval;
-			if (rising){
+
+		if (rising){
 			for (int i = 0; i < filter_level; i++){
 #ifdef MCU_AT415
 				if((CMP->ctrlsts1_bit.cmp1value)){
@@ -951,11 +954,38 @@ thiszctime = INTERVAL_TIMER->cval;
 			    }
 				}
 			}
+			
+
+			thiszctime = INTERVAL_TIMER->cval;			
+			INTERVAL_TIMER->cval = 0 ;
+
+			this_com_interval_ratio=(int)commutation_interval*10000/thiszctime;
+#if defined(USE_DEBUG)
+			if(this_com_interval_ratio>max_com_interval_ratio){
+				max_com_interval_ratio=this_com_interval_ratio;
+			}
+#endif
+
+			commutation_interval = thiszctime;
+			//commutation_interval = (commutation_interval+thiszctime)>>1;
+			//commutation_interval = (( 3*commutation_interval) + thiszctime)>>2;			
+			int next_commutation_interval=commutation_interval;			
+			if(fast_accel){
+				int target_comm_ratio=this_com_interval_ratio;
+				if(target_comm_ratio>40000){
+					target_comm_ratio=40000;
+				}else if(target_comm_ratio<10000){
+					target_comm_ratio=10000;
+				} 
+				next_commutation_interval=next_commutation_interval*10000/target_comm_ratio;
+			}
+			advance = (next_commutation_interval>>3) * advance_level;   // 60 divde 8 7.5 degree increments
+			waitTime = (next_commutation_interval >>1)  - advance;
+			
 			inner_step=-1;
-						maskPhaseInterrupts();
-						INTERVAL_TIMER->cval = 0 ;
-						waitTime = waitTime >> fast_accel;
-            COM_TIMER->cval = 0;
+						maskPhaseInterrupts();						
+						//waitTime = waitTime >> fast_accel;
+            COM_TIMER->cval = INTERVAL_TIMER->cval;//already passed INTERVAL_TIMER->cval
        			COM_TIMER->pr = waitTime;
 		        COM_TIMER->ists = 0x00;
 			      COM_TIMER->iden |= TMR_OVF_INT;
@@ -1194,18 +1224,20 @@ if(!prop_brake_active){
 	 if(maximum_throttle_change_ramp){
 	//	max_duty_cycle_change = map(k_erpm, low_rpm_level, high_rpm_level, 1, 40);
 			if(average_interval > 500){
-				max_duty_cycle_change = 10;
+				//max_duty_cycle_change = 10;
+				max_duty_cycle_change = 13;
 			}else{
-				max_duty_cycle_change = 30;
+				//max_duty_cycle_change = 30;
+				max_duty_cycle_change = 40;
 			}
 	 if ((duty_cycle - last_duty_cycle) > max_duty_cycle_change){
 		duty_cycle = last_duty_cycle + max_duty_cycle_change;
-		if(commutation_interval > 500){
+		fast_accel = 1;
+		/*if(commutation_interval > 500){
 			fast_accel = 1;
 		}else{
 			fast_accel = 0;
-		}
-
+		}*/
 	}else if ((last_duty_cycle - duty_cycle) > max_duty_cycle_change){
 		duty_cycle = last_duty_cycle - max_duty_cycle_change;
 		fast_accel = 0;
@@ -1216,7 +1248,8 @@ if(!prop_brake_active){
 	}
 		if ((armed && running) && input > 47){
 			if(VARIABLE_PWM){
-				tim1_arr = map(commutation_interval, 96, 200, TIMER1_MAX_ARR/2, TIMER1_MAX_ARR);
+				//tim1_arr = map(commutation_interval, 96, 200, TIMER1_MAX_ARR/2, TIMER1_MAX_ARR);
+				tim1_arr = map(commutation_interval, 150, 750, TIMER1_MAX_ARR/3, TIMER1_MAX_ARR);
 			}
 			adjusted_duty_cycle = ((duty_cycle * tim1_arr)/TIMER1_MAX_ARR)+1;
 		}else{
