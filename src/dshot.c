@@ -284,6 +284,9 @@ if(send_extended_dshot > 0){
   if (!running){
 	  e_com_time = 65535;
   }
+	if(e_com_time > 65535){
+		e_com_time = 65535;
+	}
 //	calculate shift amount for data in format eee mmm mmm mmm, first 1 found in first seven bits of data determines shift amount
 // this allows for a range of up to 65408 microseconds which would be shifted 0b111 (eee) or 7 times.
 
