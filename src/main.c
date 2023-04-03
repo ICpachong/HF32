@@ -186,8 +186,7 @@
 
 uint16_t comp_change_time = 0;
 
-#define VERSION_MAJOR 1
-#define VERSION_MINOR 93
+
 
 //firmware build options !! fixed speed and duty cycle modes are not to be used with sinusoidal startup !!
 
@@ -1249,7 +1248,8 @@ if(!prop_brake_active){
 		if ((armed && running) && input > 47){
 			if(VARIABLE_PWM){
 				//tim1_arr = map(commutation_interval, 96, 200, TIMER1_MAX_ARR/2, TIMER1_MAX_ARR);
-				tim1_arr = map(commutation_interval, 150, 750, TIMER1_MAX_ARR/3, TIMER1_MAX_ARR);
+				int target_arr=map(motor_kv, 2800, 4800, TIMER1_MAX_ARR/2 , TIMER1_MAX_ARR/3);
+				tim1_arr = map(commutation_interval, 150, 750, target_arr, TIMER1_MAX_ARR);
 			}
 			adjusted_duty_cycle = ((duty_cycle * tim1_arr)/TIMER1_MAX_ARR)+1;
 		}else{
