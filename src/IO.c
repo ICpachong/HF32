@@ -15,12 +15,11 @@
 char ic_timer_prescaler = 16;
 char output_timer_prescaler;
 int buffersize = 32;
-int smallestnumber = 0;
+
 uint32_t dma_buffer[64] = {0};
 char out_put = 0;
 char buffer_divider = 44;
 int dshot_runout_timer = 62500;
-uint32_t average_signal_pulse;
 
 void changeToOutput(){
 	INPUT_DMA_CHANNEL->ctrl |= DMA_DIR_MEMORY_TO_PERIPHERAL;
@@ -83,24 +82,25 @@ gpio_mode_QUICK(INPUT_PIN_PORT, GPIO_MODE_MUX, GPIO_PULL_NONE, INPUT_PIN);
 
 
 void detectInput(){
+	int smallestnumber = 0;
+	int average_signal_pulse;
+
 	smallestnumber = 20000;
 	average_signal_pulse = 0;
 	dshot = 0;
 	servoPwm = 0;
-	int lastnumber = dma_buffer[0];
-
 
 
 	int sigcount=0;
-	for ( int j = 1 ; j < 31; j++){
-		if(dma_buffer[j] - lastnumber > 0 ){
-			if((dma_buffer[j] - lastnumber) < smallestnumber){
-					smallestnumber = dma_buffer[j] - lastnumber;
+	for ( int j = 0 ; j < 16; j++){
+		if(dma_buffer[j*2+1] > dma_buffer[j*2]  ){
+			int difft=dma_buffer[j*2+1] - dma_buffer[j*2];
+			if(difft < smallestnumber){
+					smallestnumber = dma_buffer[j*2+1] - dma_buffer[j*2];
 			}
-			average_signal_pulse += (dma_buffer[j] - lastnumber);
+			average_signal_pulse += difft;
 			++sigcount;
 		}
-		lastnumber = dma_buffer[j];
 	}
 	if(sigcount<=0)sigcount=1;
 	average_signal_pulse = average_signal_pulse/sigcount ;
@@ -142,7 +142,7 @@ void detectInput(){
 //		oneshot42 = 1;
 //	}
 		if (smallestnumber > 30 && smallestnumber < 20000){
-			if((average_signal_pulse-smallestnumber)/(float)smallestnumber<0.1f){
+			if((average_signal_pulse-smallestnumber)<smallestnumber/10){
 				servoPwm = 1;
 				ic_timer_prescaler=119;
 				armed_count_threshold = 35;
