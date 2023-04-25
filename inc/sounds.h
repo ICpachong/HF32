@@ -21,7 +21,7 @@ void playChangedTone(void);
 
 void saveEEpromSettings(void);
 void setVolume(uint8_t volume);
-
+void playBlueJayTune(const uint8_t *buffer, int start,int end,int changeComStep);
 
 #endif /* SOUNDS_H_ */
 

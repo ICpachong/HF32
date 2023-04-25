@@ -64,11 +64,12 @@ uint16_t getBlueJayNoteFrequency(uint32_t bjarrayfreq){
 	return 10000000/(bjarrayfreq * 247 + 4000);
 }
 
-void playBlueJayTune(const uint8_t *buffer, int start,int end){
+void playBlueJayTune(const uint8_t *buffer, int start,int end,int changeComStep){
 	uint8_t full_time_count = 0;
 	uint16_t duration;
 	float frequency;
-	comStep(3);
+	int currentcomstep=1;
+	comStep(currentcomstep);
 	//read_flash_bin(blueJayTuneBuffer , EEPROM_START_ADD + 48 , 128);
 	for(int i = start ; i < end ; i+=2){
 	WDT->cmd = WDT_CMD_RELOAD;
@@ -85,9 +86,16 @@ void playBlueJayTune(const uint8_t *buffer, int start,int end){
 				TMR1->c3dt = 0;
 				delayMillis(duration);
 			}else{
-			frequency = getBlueJayNoteFrequency(buffer[i+1]);
-			duration= (full_time_count * 254 + buffer[i])  * (float)(1000.f / frequency);
-			playBJNote(frequency, duration);
+				frequency = getBlueJayNoteFrequency(buffer[i+1]);
+				duration= (full_time_count * 254 + buffer[i])  * (float)(1000.f / frequency);
+				playBJNote(frequency, duration);
+				if(changeComStep){
+					currentcomstep++;
+					if(currentcomstep>6){
+						currentcomstep=1;
+					}
+					comStep(currentcomstep);
+				}
 			}
 			full_time_count = 0;
 		}
@@ -104,7 +112,7 @@ void playStartupTune(){
 
 	uint8_t value = *(uint8_t*)(EEPROM_START_ADD+48);
 		if(value != 0xFF){
-			playBlueJayTune(eepromBuffer,52,167);
+			playBlueJayTune(eepromBuffer,52,167,0);
 		}else{
 	TMR1->pr = TIM1_AUTORELOAD;
 	setCaptureCompare();
@@ -205,7 +213,7 @@ WDT->cmd = WDT_CMD_RELOAD;
 void playInputTune(){
 	__disable_irq();
 	const uint8_t buf[]={0x45,0x2d,0xe0,0,0xa1,0x19};
-	playBlueJayTune(buf,0,sizeof(buf));
+	playBlueJayTune(buf,0,sizeof(buf),0);
 		
 	/*TMR1->pr = TIM1_AUTORELOAD;
 WDT->cmd = WDT_CMD_RELOAD;

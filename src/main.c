@@ -1433,10 +1433,98 @@ void zcfoundroutine(){   // only used in polling mode, blocking routine.
     	enableCompInterrupts();          // enable interrupt
 
     }
-    }
-
+   }
 }
 
+inline int inrange(int target,int val,int percent){
+	return val < target*(100+percent)/100 && val > target*(100-percent)/100;
+}
+const uint8_t detectorNotes[]={0xa0,0x19,0xe0,0,0xa0,0x19,0xe0,0,0xa0,0x19,0xe0,0,0xa0,0x19,0xe0,0,0xa0,0x19,0xe0,0,0xa0,0x19,0xe0,0};
+uint8_t bjNotesTemp[4*8];
+uint16_t alldiagnose_data[4*3];
+char phaseError[3];
+char compErrorTemp[12];
+char compError[4];	
+void SystemDiagnose(){
+	__disable_irq();	
+	ADC_Init_Detector();
+	delayMillis(100);
+	playBlueJayTune(detectorNotes,0,sizeof(detectorNotes),1);
+
+	int voltateAverage=0;
+	int effectiveVolateCount=0;
+	for(int i=0;i<3;++i){
+		allOff();
+		TMR1->c1dt=0;
+		TMR1->c2dt=0;
+		TMR1->c3dt=0;
+		switch(i){//charging
+			case 0:
+				phaseAPWM();
+				delayMillis(1);
+			break;
+			case 1:
+				phaseBPWM();
+				delayMillis(1);
+			break;
+			case 2:
+				phaseCPWM();
+				delayMillis(1);
+			break;
+		}
+		TMR1->c1dt=TMR1->pr+1;
+		TMR1->c2dt=TMR1->pr+1;
+		TMR1->c3dt=TMR1->pr+1;
+		delayMicros(500);
+		adc_ordinary_software_trigger_enable(ADC1, TRUE);
+		while(dma_flag_get(DMA1_FDT1_FLAG) == RESET);
+		dma_flag_clear(DMA1_FDT1_FLAG);
+		for(int j=0;j<4;++j){
+			alldiagnose_data[i*4+j]=adc_diagnose_data[j];
+			if(adc_diagnose_data[j]>100){				
+				voltateAverage+=adc_diagnose_data[j];
+				++effectiveVolateCount;
+			}
+		}
+	}
+	if(effectiveVolateCount>0){
+		voltateAverage=voltateAverage/effectiveVolateCount;
+	}else{
+		voltateAverage=1000;
+	}
+	TMR1->c1dt=0;
+	TMR1->c2dt=0;
+	TMR1->c3dt=0;
+	allOff();
+	delayMillis(100);
+	
+
+	for(int i=0;i<3;++i){
+		for(int j=0;j<4;++j){
+			compErrorTemp[i*4+j]=!inrange(voltateAverage,alldiagnose_data[i*4+j],5);
+		}
+		phaseError[i]=compErrorTemp[i*4+0] & compErrorTemp[i*4+1] & compErrorTemp[i*4+2] & compErrorTemp[i*4+3];
+	}
+	for(int j=0;j<4;++j){
+		compError[j]=compErrorTemp[0*4+j]&compErrorTemp[1*4+j]&compErrorTemp[2*4+j];
+	}
+	
+
+	for(int i=0;i<8;++i){
+		bjNotesTemp[i*4]=0xa0;
+		if(i<1){
+			bjNotesTemp[i*4+1]=0x21;
+		}else if(i<4){
+			bjNotesTemp[i*4+1]=phaseError[i-1]?0:0x19;
+		}else{
+			bjNotesTemp[i*4+1]=compError[i-4]?0:0x19;
+		}
+		bjNotesTemp[i*4+2]=0xe0;
+		bjNotesTemp[i*4+3]=0;		
+	}
+	playBlueJayTune(bjNotesTemp,0,sizeof(bjNotesTemp),0);			
+	__enable_irq();
+}
 
 int main(void)
 {
@@ -1487,17 +1575,6 @@ adc_counter = 5;
  TEN_KHZ_TIMER->swevt |= TMR_OVERFLOW_SWTRIG;
  TEN_KHZ_TIMER->iden |= TMR_OVF_INT;
 
-#ifdef USE_ADC
-   ADC_Init();
-#endif
-
-#ifdef USE_ADC_INPUT
-
-#else
-tmr_channel_enable(IC_TIMER_REGISTER, IC_TIMER_CHANNEL, TRUE);
-IC_TIMER_REGISTER->ctrl1_bit.tmren = TRUE;
-
-#endif
 
 adc_counter = 6;
 loadEEpromSettings();
@@ -1539,6 +1616,20 @@ adc_counter = 7;
 		stall_protect_minimum_duty = stall_protect_minimum_duty + 50;
 		min_startup_duty = min_startup_duty + 50;
 	}
+if(eepromBuffer[39]==1){//hull senser
+	SystemDiagnose();
+}
+#ifdef USE_ADC
+   ADC_Init();
+#endif
+
+#ifdef USE_ADC_INPUT
+
+#else
+tmr_channel_enable(IC_TIMER_REGISTER, IC_TIMER_CHANNEL, TRUE);
+IC_TIMER_REGISTER->ctrl1_bit.tmren = TRUE;
+
+#endif
 
 #ifdef MCU_F031
 	  GPIOF->BSRR = LL_GPIO_PIN_6;            // uncomment to take bridge out of standby mode and set oc level

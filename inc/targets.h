@@ -18,21 +18,27 @@
 
 #endif
 
-#define NEUTRONRC
 //#define USE_DEBUG
 //#define USE_INNER_STEP
 
-
 #define VERSION_MAJOR 3
-#define VERSION_MINOR 1
+#define VERSION_MINOR 2
 
 #ifdef AT32DEV_F421
-#ifdef NEUTRONRC
-#define FIRMWARE_NAME           "NeutronRC Mi"
-#define FILE_NAME                "NeutronRC_F421"
-#else
 #define FIRMWARE_NAME           "AT32PB4     "
 #define FILE_NAME                "AT32DEV_F421"
+#define DEAD_TIME               60
+#define HARDWARE_GROUP_AT_A
+#define USE_SERIAL_TELEMETRY
+#define PA6_VOLTAGE
+#endif
+
+#ifdef NEUTRONRC_F421
+#define FIRMWARE_NAME           "NeutronRC Mi"
+#define FILE_NAME                "NeutronRC_F421"
+#define DEAD_TIME               60
+#define HARDWARE_GROUP_AT_A
+#define USE_SERIAL_TELEMETRY
 #endif
 
 #define DEAD_TIME               60
@@ -187,15 +193,27 @@
 //#define PHASE_B_COMP COMP_INMInput_IN1  // pa4
 //#define PHASE_C_COMP COMP_INMInput_IN2  // pa5
 
+
+
 #if defined(AT32DEV_F421_540)
+#define PHASE_A_COMP_CHANNEL ADC_CHANNEL_0
+#define PHASE_B_COMP_CHANNEL ADC_CHANNEL_4
+#define PHASE_C_COMP_CHANNEL ADC_CHANNEL_5
+#define PHASE_CC_COMP_CHANNEL ADC_CHANNEL_1
 #define PHASE_A_COMP  0x400000D1          
 #define PHASE_B_COMP  0x400000C1
 #define PHASE_C_COMP  0x400000E1  
 #else
+#define PHASE_A_COMP_CHANNEL ADC_CHANNEL_5
+#define PHASE_B_COMP_CHANNEL ADC_CHANNEL_4
+#define PHASE_C_COMP_CHANNEL ADC_CHANNEL_0
+#define PHASE_CC_COMP_CHANNEL ADC_CHANNEL_1
 #define PHASE_A_COMP  0x400000E1            
 #define PHASE_B_COMP  0x400000C1
 #define PHASE_C_COMP  0x400000D1
 #endif
+
+#define CHANNEL_TO_PIN(CANNNEL) (1<<(CANNNEL+1))
 
 #endif
 
