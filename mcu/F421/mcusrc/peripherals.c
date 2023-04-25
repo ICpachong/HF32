@@ -110,6 +110,56 @@ void TIM1_Init(void){
 	TMR1->cm1 = 0x6868;   // Channel 1 and 2 in PWM output mode
 	TMR1->cm2 = 0x68;     // channel 3 in PWM output mode
 
+	/*tmr_output_config_type tmr_oc_init_structure;
+	tmr_output_default_para_init(&tmr_oc_init_structure);
+	
+	tmr_output_struct->oc_mode = TMR_OUTPUT_CONTROL_PWM_MODE_A;
+  tmr_output_struct->oc_idle_state = FALSE;
+  tmr_output_struct->occ_idle_state = FALSE;
+  tmr_output_struct->oc_polarity = TMR_OUTPUT_ACTIVE_HIGH;
+  tmr_output_struct->occ_polarity = TMR_OUTPUT_ACTIVE_HIGH;
+  tmr_output_struct->oc_output_state = TRUE;
+  tmr_output_struct->occ_output_state = FALSE;
+	
+	tmr_oc_init_structure.oc_mode = TMR_OUTPUT_CONTROL_PWM_MODE_A;
+	tmr_oc_init_structure.oc_idle_state = FALSE;
+	tmr_oc_init_structure.oc_polarity = TMR_OUTPUT_ACTIVE_HIGH;
+	tmr_oc_init_structure.oc_output_state = TRUE;
+	tmr_output_channel_config(TMR1, TMR_SELECT_CHANNEL_1, &tmr_oc_init_structure);*/
+	
+	#ifdef USE_INVERTED_HIGH
+		TMR1->cctrl_bit.c1p=TMR_OUTPUT_ACTIVE_LOW;
+		TMR1->cctrl_bit.c2p=TMR_OUTPUT_ACTIVE_LOW;
+		TMR1->cctrl_bit.c3p=TMR_OUTPUT_ACTIVE_LOW;
+		TMR1->ctrl2_bit.c1ios=TRUE;
+		TMR1->ctrl2_bit.c2ios=TRUE;
+		TMR1->ctrl2_bit.c3ios=TRUE;
+  #else
+		TMR1->cctrl_bit.c1p=TMR_OUTPUT_ACTIVE_HIGH;
+		TMR1->cctrl_bit.c2p=TMR_OUTPUT_ACTIVE_HIGH;
+		TMR1->cctrl_bit.c3p=TMR_OUTPUT_ACTIVE_HIGH;
+		TMR1->ctrl2_bit.c1ios=FALSE;
+		TMR1->ctrl2_bit.c2ios=FALSE;
+		TMR1->ctrl2_bit.c3ios=FALSE;
+  #endif
+  #ifdef USE_INVERTED_LOW
+		TMR1->cctrl_bit.c1cp=TMR_OUTPUT_ACTIVE_LOW;
+		TMR1->cctrl_bit.c2cp=TMR_OUTPUT_ACTIVE_LOW;
+		TMR1->cctrl_bit.c3cp=TMR_OUTPUT_ACTIVE_LOW;
+		TMR1->ctrl2_bit.c1cios=TRUE;
+		TMR1->ctrl2_bit.c2cios=TRUE;
+		TMR1->ctrl2_bit.c3cios=TRUE;
+  #else
+		TMR1->cctrl_bit.c1cp=TMR_OUTPUT_ACTIVE_HIGH;
+		TMR1->cctrl_bit.c2cp=TMR_OUTPUT_ACTIVE_HIGH;
+		TMR1->cctrl_bit.c3cp=TMR_OUTPUT_ACTIVE_HIGH;
+		TMR1->ctrl2_bit.c1cios=FALSE;
+		TMR1->ctrl2_bit.c2cios=FALSE;
+		TMR1->ctrl2_bit.c3cios=FALSE;
+  #endif
+	
+	
+	
 	tmr_output_channel_buffer_enable(TMR1,TMR_SELECT_CHANNEL_1, TRUE);
 	tmr_output_channel_buffer_enable(TMR1,TMR_SELECT_CHANNEL_2, TRUE);
 	tmr_output_channel_buffer_enable(TMR1,TMR_SELECT_CHANNEL_3, TRUE);

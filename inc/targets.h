@@ -41,9 +41,13 @@
 #define USE_SERIAL_TELEMETRY
 #endif
 
+#ifdef NEUTRONRC_IH_F421
+#define FIRMWARE_NAME           "NeutronRC IH"
+#define FILE_NAME                "NTRC_IH_F421"
 #define DEAD_TIME               60
 #define HARDWARE_GROUP_AT_A
 #define USE_SERIAL_TELEMETRY
+#define USE_INVERTED_HIGH
 #endif
 
 #ifdef AT32DEV_F421_540
@@ -53,7 +57,6 @@
 #define HARDWARE_GROUP_AT_A
 #define USE_SERIAL_TELEMETRY
 #endif
-
 
 #ifdef TEKKO32_F421
 #define FIRMWARE_NAME           "Tekko32 F4  "
