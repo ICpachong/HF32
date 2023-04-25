@@ -50,35 +50,56 @@ uint16_t dshot_badcounts;
 char dshot_extended_telemetry = 0;
 uint16_t send_extended_dshot = 0;
 
+/*inline int inrange(int val,int target,int margin){
+	return val>=target-margin && val<=target+margin;
+}*/
+
 void computeDshotDMA(){
 
 
-const int j = 0;
-dshot_frametime = dma_buffer[31]- dma_buffer[0];
-uint32_t dpulsbits=0;
+	const int j = 0;
+	dshot_frametime = dma_buffer[31]- dma_buffer[0];	
+	uint32_t pulstime=(dma_buffer[30]- dma_buffer[0])/15;
+	/*//uint32_t midtime=pulstime*9/16;
+	uint32_t lowtarget=pulstime*6/16;
+	uint32_t hightarget=pulstime*12/16;	
+	uint32_t margin=pulstime*2/16;*/
+	
+	uint32_t midtime=pulstime*21/40;
+	uint32_t lowtarget=pulstime*7/20;
+	uint32_t hightarget=pulstime*14/20;	
+	const uint32_t margin=pulstime*3/20;
+	const uint32_t margin_loose=pulstime*5/20;
+	
+	int isValid=0;
+		
+	uint32_t dpulsbits=0;
+	
 #if defined MCU_AT421
-
-				if((dshot_frametime < 3500)&&(dshot_frametime > 2800)){
-								
+			if((dshot_frametime < 3500)&&(dshot_frametime > 2800)){
+#elif defined MCU_AT415
+			if((dshot_frametime < 5000)&&(dshot_frametime > 3000)){
+#endif
+				isValid=1;
 				for (int i = 0; i < 16; i++){
 					dpulsbits<<=1;
-					if(dma_buffer[j + (i<<1) +1] - dma_buffer[j + (i<<1)]>=100){
-						dpulsbits|=1;
+					int timediff=dma_buffer[j + (i<<1) +1] - dma_buffer[j + (i<<1)];
+					if((timediff>=lowtarget - margin && timediff<=hightarget + margin)
+						||(i==0 && timediff>=lowtarget - margin_loose && timediff<=hightarget + margin)//special process for at32f435 fc which might send shorter signal for the 1 bit
+					){
+						if(timediff>midtime){
+							dpulsbits|=1;
+						}
+					}else{
+						isValid=0;
+						break;
 					}
 				}
-#endif
-#if defined MCU_AT415
+			}
 
-				if((dshot_frametime < 5000)&&(dshot_frametime > 3000)){
-						
-				for (int i = 0; i < 16; i++){
-					dpulsbits<<=1;
-					if(dma_buffer[j + (i<<1) +1] - dma_buffer[j + (i<<1)]>=120){
-						dpulsbits|=1;
-					}
-				}
-#endif
-				
+
+			
+			if(isValid){
 				int calcCRC = ((dpulsbits>>12 )^ (dpulsbits>>8) ^ (dpulsbits>>4))&0xf;
 				int checkCRC = dpulsbits &0xf;		
 				
@@ -206,7 +227,8 @@ uint32_t dpulsbits=0;
 			}else{
 				dshot_badcounts++;
 			}
-
+		}else{
+			dshot_badcounts++;
 		}
 }
 
