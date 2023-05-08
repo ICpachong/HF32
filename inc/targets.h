@@ -22,7 +22,7 @@
 //#define USE_INNER_STEP
 
 #define VERSION_MAJOR 3
-#define VERSION_MINOR 2
+#define VERSION_MINOR 3
 
 #ifdef AT32DEV_F421
 #define FIRMWARE_NAME           "AT32PB4     "
@@ -31,6 +31,7 @@
 #define HARDWARE_GROUP_AT_A
 #define USE_SERIAL_TELEMETRY
 #define PA6_VOLTAGE
+#define COMM_TIMEOUT_PROCESS comm_timeout=20000;//((zero_crosses<=3|| zero_crosses>=15 )? 30000 : comm_timeout*80/100 );
 #endif
 
 #ifdef NEUTRONRC_F421
@@ -422,4 +423,8 @@
 
 
 
-
+#ifdef MCU_AT415
+	#define CMP_VALUE (CMP->ctrlsts1_bit.cmp1value)
+#else
+	#define CMP_VALUE (CMP->ctrlsts_bit.cmpvalue)
+#endif

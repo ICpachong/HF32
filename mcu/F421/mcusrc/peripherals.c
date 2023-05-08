@@ -213,7 +213,8 @@ void TIM6_Init(void)
 	crm_periph_clock_enable(CRM_TMR6_PERIPH_CLOCK, TRUE);
 	TMR6->pr = 0xFFFF;
 	TMR6->div = 59;
-
+	NVIC_SetPriority(TMR6_GLOBAL_IRQn, 0);
+  NVIC_EnableIRQ(TMR6_GLOBAL_IRQn);
 }
 
 

@@ -215,6 +215,16 @@ void TMR1_BRK_OVF_TRG_HALL_IRQHandler(void)
   }
 }
 
+void IntervalTimerOverflow();
+void TMR6_GLOBAL_IRQHandler(void)
+{
+		if((TMR6->ists & TMR_OVF_FLAG) != (uint16_t)RESET)
+	  {
+			TMR6->ists = (uint16_t)~TMR_OVF_FLAG;
+	  }
+		IntervalTimerOverflow();
+}
+
 /**
   * @brief This function handles TIM6 global and DAC underrun error interrupts.
   */
