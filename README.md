@@ -1,3 +1,4 @@
+<img align="right" src="logo.svg" alt="Bluejay" width="250">
 # HF32
 
 ESC firmware for brushless motors in multirotors.
